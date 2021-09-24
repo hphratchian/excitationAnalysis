@@ -1,0 +1,11 @@
+%chk=test001initial
+#p test hf geom=modela opt output=(mat,AO2ElectronIntegrals)
+int=noraff nosymm
+
+test
+
+0  1
+c oh h h me
+
+test001initial.mat
+

@@ -27,42 +27,22 @@ INCLUDE 'excitationAnalysis_mod.f03'
       type(mqc_gaussian_unformatted_matrix_file)::GMatrixFileInitial,  &
         GMatrixFileFinal
       type(MQC_Variable)::tmpMQCvar
-
-!hph+
-!      integer(kind=int64)::nCommands,i,j,k1,k2,nAtoms,nAt3
-!      integer(kind=int64),dimension(:),allocatable::atomicNumbers
-!      real(kind=real64)::Vnn,Escf
-!      real(kind=real64),dimension(3)::tmp3Vec
-!      real(kind=real64),dimension(:),allocatable::cartesians
-!      real(kind=real64),dimension(:,:),allocatable::distanceMatrix
-!      character(len=512)::matrixFilename,tmpString
-!      type(MQC_Variable)::nEalpha,nEbeta,nEtot,KEnergy,VEnergy,OneElEnergy,  &
-!        TwoElEnergy,scfEnergy
-!      type(MQC_Variable)::SMatrixAO,TMatrixAO,VMatrixAO,HCoreMatrixAO,  &
-!        FMatrixAlpha,FMatrixBeta,PMatrixAlpha,PMatrixBeta,PMatrixTotal,  &
-!        ERIs,JMatrixAlpha,KMatrixAlpha
-!      type(MQC_R4Tensor)::tmpR4
-!hph-
-
 !
 !     Format Statements
 !
  1000 Format(1x,'Enter Program excitationAnalysis.')
  1010 Format(3x,'Initial State Matrix File: ',A,/,  &
         3x,'Final   State Matrix File: ',A,/)
- 2000 Format(1x,'***',A,'***',/,  &
+ 2000 Format(/,1x,'***',A,'***',/,  &
         3x,'Number of electrons                            = ',I6,/,  &
         3x,'Number of alpha electrons                      = ',I6,/,  &
         3x,'Number of beta  electrons                      = ',I6,/,  &
         3x,'Number of atomic orbital basis functions       = ',I6,/,  &
         3x,'Number of linearly independent basis functions = ',I6,/)
-
-      
- 1100 Format(1x,'nAtoms=',I4)
- 1200 Format(1x,'Atomic Coordinates (Angstrom)')
- 1210 Format(3x,I3,2x,A2,5x,F7.4,3x,F7.4,3x,F7.4)
- 1300 Format(1x,'Nuclear Repulsion Energy = ',F20.6)
- 8999 Format(/,1x,'END OF TEST PROGRAM scfEnergyTerms.')
+ 3000 Format(/,1x,'Gill Excitation Number: ',F6.2,/,  &
+        5x,'Alpha Contribution: ',F6.2,/,  &
+        5x,'Beta  Contribution: ',F6.2)
+ 8999 Format(/,1x,'END OF PROGRAM EXCITATIONANALYSIS.')
 !
 !
       write(IOut,1000)
@@ -92,7 +72,6 @@ INCLUDE 'excitationAnalysis_mod.f03'
       OverlapAO = tmpMQCvar
       call GMatrixFileInitial%getArray('ALPHA MO COEFFICIENTS',mqcVarOut=tmpMQCvar)
       CAlphaInitial = tmpMQCvar
-      Write(IOut,*)' Initial State isUnrestricted=',GMatrixFileInitial%isUnrestricted()
       if(GMatrixFileInitial%isUnrestricted()) then
         call GMatrixFileInitial%getArray('BETA MO COEFFICIENTS',mqcVarOut=tmpMQCvar)
         CBetaInitial = tmpMQCvar
@@ -107,7 +86,6 @@ INCLUDE 'excitationAnalysis_mod.f03'
 !     Once things are read, close the file.
 !
       call GMatrixFileFinal%load(matrixFilenameFinal)
-      write(IOut,*)' Final   ICGU = ',GMatrixFileFinal%ICGU
       nElectronsFinal = GMatrixFileFinal%getVal('nelectrons')
       nElectronsAlphaFinal = GMatrixFileFinal%getVal('nalpha')
       nElectronsBetaFinal = GMatrixFileFinal%getVal('nbeta')
@@ -117,7 +95,6 @@ INCLUDE 'excitationAnalysis_mod.f03'
         CBetaFinal(nBasisFinal,nBasisUseFinal))
       call GMatrixFileFinal%getArray('ALPHA MO COEFFICIENTS',mqcVarOut=tmpMQCvar)
       CAlphaFinal = tmpMQCvar
-      Write(IOut,*)' Final   State isUnrestricted=',GMatrixFileFinal%isUnrestricted()
       if(GMatrixFileFinal%isUnrestricted()) then
         call GMatrixFileFinal%getArray('BETA MO COEFFICIENTS',mqcVarOut=tmpMQCvar)
         CBetaFinal = tmpMQCvar
@@ -133,9 +110,6 @@ INCLUDE 'excitationAnalysis_mod.f03'
 !
       ALLOCATE(bMatrixAlpha(nElectronsBetaInitial,nElectronsAlphaFinal),  &
         bMatrixBeta(nElectronsBetaInitial,nElectronsBetaFinal))
-      Write(IOut,*)' Hrant - bMatrixAlpha:  ',SHAPE(bMatrixAlpha)
-      Write(IOut,*)' Hrant - CAlphaInitial: ',SHAPE(CAlphaInitial)
-      Write(IOut,*)' Hrant - CAlphaFinal:   ',SHAPE(CAlphaFinal)
       bMatrixAlpha = MatMul(Transpose(CAlphaInitial(:,1:nElectronsAlphaInitial)),  &
         MatMul(OverlapAO,CAlphaFinal(:,1:nElectronsAlphaFinal)))
       call MQC_Print(IOut,bMatrixAlpha,Header='Alpha b')
@@ -150,9 +124,7 @@ INCLUDE 'excitationAnalysis_mod.f03'
         dot_product(RESHAPE(bMatrixBeta,(/nElectronsBetaInitial*nElectronsBetaFinal/)),  &
         RESHAPE(bMatrixBeta,(/nElectronsBetaInitial*nElectronsBetaFinal/)))
       nExcitationGill = nExcitationAlphaGill + nExcitationBetaGill
-      Write(IOut,*)' Gill excitation number (alpha) = ',nExcitationAlphaGill
-      Write(IOut,*)' Gill excitation number (beta ) = ',nExcitationBetaGill
-      Write(IOut,*)' Gill excitation number (total) = ',nExcitationGill
+      write(IOut,3000) nExcitationGill,nExcitationAlphaGill,nExcitationBetaGill
 !
   999 Continue
       write(iOut,8999)
